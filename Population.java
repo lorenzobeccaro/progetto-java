@@ -10,11 +10,14 @@ class Population extends ThreadPoolExecutor {
   private Condition unpaused = pauseLock.newCondition();
   
   private Map<String,String> observingData = new HashMap<String,String>();
-	private List<SimulationState> states = Collections.synchronizedList(new LinkedList<SimulationState>());
+	private volatile List<SimulationState> states = Collections.synchronizedList(new LinkedList<SimulationState>());
 	
 	private volatile List<Human> humans = Collections.synchronizedList(new LinkedList<Human>());
 
+	private static final int MAX_STATES = 20;
+	private static final int STEPS = 10;
 	private SimulationState result;
+	private volatile int changes = 0;
 	
 	@Override
 	public String toString() {
@@ -22,7 +25,7 @@ class Population extends ThreadPoolExecutor {
 	}
 
   public Population() {
-  	super(2000, 200000, 1, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+  	super(500, 200000, 1, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
   }
 
   @Override
@@ -80,13 +83,18 @@ class Population extends ThreadPoolExecutor {
 		return new SimulationState(this.humans);
 	}
 
-	public void addHuman(Human h) {
+	public synchronized void addHuman(Human h) {
 		try {
 			this.execute(h);
 			this.humans.add(h);
+			this.changes++;
 		} catch (Exception e) {
 			// human rejected
 			//System.out.println(h+" rejected");
+		}
+		if(changes>STEPS) {
+			saveState();
+			changes = 0;
 		}
 	}
 	
@@ -96,25 +104,16 @@ class Population extends ThreadPoolExecutor {
 	}
 
 	public synchronized boolean isStable() {
-		List<SimulationState> avgStates = new LinkedList<SimulationState>();
 		Queue<SimulationState> queue = new LinkedList<SimulationState>(this.states);
-		List<SimulationState> s = new LinkedList<SimulationState>();
+		//System.out.println(queue);
 		SimulationState lastState = null;
 		if(!states.isEmpty()) {
-			lastState = states.get(0);
+			lastState = states.get(states.size()-1);
 		} else {
 			return false;
 		}
-		for(int i=0; queue.size()>0; i++) {
-			if(i%5 == 0 && i != 0) {
-				avgStates.add(SimulationState.averageState(s));
-				s.clear();
-			}
-			s.add(queue.poll());
-		}
-		for(int i=0; i<avgStates.size()-1; i++) {
-			SimulationState st = avgStates.get(i);
-			if(!st.isNear(avgStates.get(i+1)))
+		while(queue.size()>1) {
+			if(queue.poll().isNear(queue.peek()))
 				return false;
 		}
 		this.result = lastState;
@@ -124,10 +123,10 @@ class Population extends ThreadPoolExecutor {
 	public synchronized void saveState() {
 		SimulationState state = getState();
 		this.states.add(state);
-		while(states.size()>50) {
-			this.states.remove(states.size());
+		while(states.size()>MAX_STATES) {
+			this.states.remove(0);
 		}
-		//System.out.println(state);
+		System.out.println(state);
 	}
 
 	public SimulationState getResult() {

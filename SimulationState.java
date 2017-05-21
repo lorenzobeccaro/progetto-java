@@ -6,7 +6,7 @@ public class SimulationState {
 	private Map<String,Integer> population;
 	private Map<String,Double> percentages;
 	
-	private final double ERROR = 0.02;
+	private final double ERROR = 0.1;
 
 	public SimulationState() {
 		
@@ -96,12 +96,15 @@ public class SimulationState {
 	}
 
 	public boolean isNear(SimulationState otherState) {
-		Map<String,Double> data,otherData;
-		data = getObservingData();
-		otherData = otherState.getObservingData();
+		Map<String,Integer> data,otherData;
+		data = this.getPopulation();
+		otherData = otherState.getPopulation();
 		for(String k : data.keySet()) {
 			if(otherData.containsKey(k)) {
-				if(!almostEqual(data.get(k),otherData.get(k), ERROR)) {
+				double perc1, perc2;
+				perc1 = data.get(k)/this.getPopulationNumber();
+				perc2 = otherData.get(k)/otherState.getPopulationNumber();
+				if(!almostEqual(perc1,perc2, ERROR)) {
 					//System.out.println(""+data.get(k)+" "+otherData.get(k));
 					return false;
 				}
@@ -168,7 +171,7 @@ public class SimulationState {
 	}
 
 	private boolean almostEqual(double a, double b, double eps){
-		System.out.println(Math.abs(a-b)+"<"+eps);
+		//System.out.println(Math.abs(a-b)+"<"+eps);
 		return Math.abs(a-b)<eps;
 	}
 

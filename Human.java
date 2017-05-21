@@ -4,9 +4,14 @@ public class Human implements Runnable {
 	private Chromosome chromosome;
 	private Chromosome partnerChromosome;
 	
-	public static final int MAX_CHILDREN = 100;
-	public static final int MAX_DATES = 5000;
-	public static final int HAPPINESS_THRESHOLD = 3000;
+	// ALBERO GENEALOGICO
+	public Chromosome father;
+	public Chromosome mother;
+	 
+	
+	public static final int MAX_CHILDREN = 10;
+	public static final int MAX_DATES = 8000;
+	public static final int HAPPINESS_THRESHOLD = 5000;
 	
 	private int childCount = 0;
 	private int dateCount = 0;

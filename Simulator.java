@@ -16,8 +16,8 @@ public class Simulator {
 		
 		Chromosome.mapTypeToGene(Gender.MALE, "M", false);
 		Chromosome.mapTypeToGene(Gender.MALE, "A", true);
-		Chromosome.mapTypeToGene(Gender.FEMALE, "P", true);
-		Chromosome.mapTypeToGene(Gender.FEMALE, "S", false);
+		Chromosome.mapTypeToGene(Gender.FEMALE, "P", false);
+		Chromosome.mapTypeToGene(Gender.FEMALE, "S", true);
 		
 		PayOffsMatrix m = new PayOffsMatrix();
 		m.addFormula("P", "M", a-b/2-c, a-b/2-c);
@@ -49,12 +49,15 @@ public class Simulator {
 		pop.setState(initState);
 		//System.out.println(pop);
 		while(!pop.isStable()) {
-			//Thread.sleep(10);
-			pop.saveState();
+			Thread.sleep(2);
+			//System.out.println(pop);
+			//pop.saveState();
 		}
 		pop.shutdownNow();
-		while(!pop.isTerminated())
+		while(!pop.isTerminated()) {
+			//System.out.println(pop);
 			Thread.sleep(100);
+		}
 		System.out.println("DONE");
 		System.out.println("---RESULT---" + pop.getResult());
 		
