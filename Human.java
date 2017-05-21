@@ -9,9 +9,9 @@ public class Human implements Runnable {
 	public Chromosome mother;
 	 
 	
-	public static final int MAX_CHILDREN = 10;
-	public static final int MAX_DATES = 8000;
-	public static final int HAPPINESS_THRESHOLD = 5000;
+	public static final int MAX_CHILDREN = 20;
+	public static final int MAX_DATES = 10000;
+	public static final int HAPPINESS_THRESHOLD = 8000;
 	
 	private int childCount = 0;
 	private int dateCount = 0;
@@ -35,7 +35,7 @@ public class Human implements Runnable {
 			while(this.dateCount < MAX_DATES && this.childCount < MAX_CHILDREN && !Simulator.getPopulation().isShutdown()) {
 				if(this.chromosome.getGender() == Gender.FEMALE) {
 					Hotel.bar.sit(this);
-					wait();
+					wait(1);
 					if(this.partnerChromosome != null)
 						generate();
 				} else {
@@ -46,7 +46,7 @@ public class Human implements Runnable {
 				}
 			}
 		} catch (InterruptedException e) {
-			
+			die();
 		}
 		die();
 	}
@@ -87,7 +87,7 @@ public class Human implements Runnable {
 		Human child = new Human(new Chromosome(partnerChromosome,chromosome));
 		Simulator.getPopulation().addHuman(child);
 		this.partnerChromosome = null;
-		//System.out.println(child);
+		
 		//Simulator.getPopulation().saveState();
 		//System.out.println(Simulator.getPopulation());
 	}

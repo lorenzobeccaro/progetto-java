@@ -6,7 +6,7 @@ public class SimulationState {
 	private Map<String,Integer> population;
 	private Map<String,Double> percentages;
 	
-	private final double ERROR = 0.1;
+	private final double ERROR = 0.01;
 
 	public SimulationState() {
 		
@@ -115,59 +115,6 @@ public class SimulationState {
 		}
 		return true;
 
-	}
-	
-	public static SimulationState averageState(List<SimulationState> l) {
-		SimulationState avgState = new SimulationState();
-		List<Map<String,Integer>> popList = new LinkedList<Map<String,Integer>>();
-		List<Map<String,Double>> percList = new LinkedList<Map<String,Double>>();
-		for(SimulationState s : l) {
-			popList.add(s.population);
-			percList.add(s.percentages);
-		}
-		avgState.setPopulation(averagePop(popList));
-		avgState.setPercentages(averagePerc(percList));
-		return avgState;
-	}
-	
-	private static Map<String,Double> averagePerc(List<Map<String,Double>> l) {
-		Map<String,Double> map = new TreeMap<String,Double>();
-		for(Map<String,Double> m : l) {
-			for(String k : m.keySet()) {
-				addValue(map,k,m.get(k));
-			}
-		}
-		for(String k : new TreeMap<String,Double>(map).keySet()) {
-			map.put(k, map.get(k)/l.size());
-		}
-		return map;
-	}
-	
-	private static Map<String,Integer> averagePop(List<Map<String,Integer>> l) {
-		Map<String,Integer> map = new TreeMap<String,Integer>();
-		for(Map<String,Integer> m : l) {
-			for(String k : m.keySet()) {
-				addValue(map,k,m.get(k));
-			}
-		}
-		for(String k : new TreeMap<String,Integer>(map).keySet()) {
-			map.put(k, map.get(k)/l.size());
-		}
-		return map;
-	}
-	
-	private static void addValue(Map<String,Double> m, String k, double v) {
-		if(m.containsKey(k))
-			m.put(k, m.get(k)+v);
-		else 
-			m.put(k, v);
-	}
-	
-	private static void addValue(Map<String,Integer> m, String k, int v) {
-		if(m.containsKey(k))
-			m.put(k, m.get(k)+v);
-		else 
-			m.put(k, v);
 	}
 
 	private boolean almostEqual(double a, double b, double eps){

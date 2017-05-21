@@ -14,8 +14,8 @@ class Population extends ThreadPoolExecutor {
 	
 	private volatile List<Human> humans = Collections.synchronizedList(new LinkedList<Human>());
 
-	private static final int MAX_STATES = 20;
-	private static final int STEPS = 10;
+	private static final int MAX_STATES = 10;
+	private static final int STEPS = 50;
 	private SimulationState result;
 	private volatile int changes = 0;
 	
@@ -25,7 +25,7 @@ class Population extends ThreadPoolExecutor {
 	}
 
   public Population() {
-  	super(500, 200000, 1, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+  	super(2000, 200000, 1, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
   }
 
   @Override
@@ -88,6 +88,7 @@ class Population extends ThreadPoolExecutor {
 			this.execute(h);
 			this.humans.add(h);
 			this.changes++;
+			System.out.print(".");
 		} catch (Exception e) {
 			// human rejected
 			//System.out.println(h+" rejected");
@@ -113,7 +114,7 @@ class Population extends ThreadPoolExecutor {
 			return false;
 		}
 		while(queue.size()>1) {
-			if(queue.poll().isNear(queue.peek()))
+			if(!queue.poll().isNear(queue.peek()))
 				return false;
 		}
 		this.result = lastState;
@@ -126,6 +127,7 @@ class Population extends ThreadPoolExecutor {
 		while(states.size()>MAX_STATES) {
 			this.states.remove(0);
 		}
+		System.out.println();
 		System.out.println(state);
 	}
 
