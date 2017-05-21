@@ -6,7 +6,7 @@ public class SimulationState {
 	private Map<String,Integer> population;
 	private Map<String,Double> percentages;
 	
-	private final double ERROR = 0.01;
+	private final double ERROR = 0.0001;
 
 	public SimulationState() {
 		

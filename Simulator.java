@@ -27,7 +27,7 @@ public class Simulator {
 		
 		setMatrix(m);
 		
-		//System.out.println(m);
+		System.out.println(m);
 		
 		
 				

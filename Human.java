@@ -10,7 +10,7 @@ public class Human implements Runnable {
 	 
 	
 	public static final int MAX_CHILDREN = 20;
-	public static final int MAX_DATES = 10000;
+	public static final int MAX_DATES = 6000;
 	public static final int HAPPINESS_THRESHOLD = 8000;
 	
 	private int childCount = 0;
@@ -35,7 +35,7 @@ public class Human implements Runnable {
 			while(this.dateCount < MAX_DATES && this.childCount < MAX_CHILDREN && !Simulator.getPopulation().isShutdown()) {
 				if(this.chromosome.getGender() == Gender.FEMALE) {
 					Hotel.bar.sit(this);
-					wait(1);
+					wait(0,10);
 					if(this.partnerChromosome != null)
 						generate();
 				} else {
@@ -46,7 +46,7 @@ public class Human implements Runnable {
 				}
 			}
 		} catch (InterruptedException e) {
-			die();
+			//e.printStackTrace();
 		}
 		die();
 	}
