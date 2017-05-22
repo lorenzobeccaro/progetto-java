@@ -14,7 +14,7 @@ class Population extends ThreadPoolExecutor {
 	
 	private volatile List<Human> humans = Collections.synchronizedList(new LinkedList<Human>());
 
-	private static final int MAX_STATES = 100;
+	private static final int MAX_STATES = 120;
 	private static final int STEPS = 100;
 	private SimulationState result;
 	private volatile int changes = 0;
@@ -25,7 +25,8 @@ class Population extends ThreadPoolExecutor {
 	}
 
   public Population() {
-  	super(1000, 200000, 1, TimeUnit.MILLISECONDS, new SynchronousQueue<Runnable>());
+  	super(20000, 200000, 1, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+  	
   }
 
   @Override
@@ -109,21 +110,42 @@ class Population extends ThreadPoolExecutor {
 			changes = 0;
 		}
 	}
+	
+	private boolean singleGender() {
+		Queue<Human> snap = new LinkedList<Human>(humans);
+		Human current = snap.poll();
+		boolean result = true;
+		while(snap.size()>0) {
+			result = result && current.getGender().equals(snap.peek());
+			current = snap.poll();
+		}
+		return result;
+	}
 
 	public synchronized boolean isStable() {
+		
+		if(states.size()<MAX_STATES)
+			return false;
+		
 		Queue<SimulationState> queue = new LinkedList<SimulationState>(this.states);
 		//System.out.println(queue);
 		SimulationState lastState = null;
-		if(states.size()==MAX_STATES) {
+		if(states.size()>=1) {
 			lastState = states.get(states.size()-1);
-		} else {
-			return false;
+			this.result = lastState;
 		}
+		
+
+		if(singleGender()) {
+			return true;
+		}
+		
+		
 		while(queue.size()>1) {
 			if(!queue.poll().isNear(queue.peek()))
 				return false;
 		}
-		this.result = lastState;
+		
 		return true;
 	}
 	

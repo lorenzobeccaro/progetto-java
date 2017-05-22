@@ -14,8 +14,8 @@ public class Simulator {
 		int b = 20;
 		int c = 3;
 		
-		Chromosome.mapTypeToGene(Gender.MALE, "M", false);
-		Chromosome.mapTypeToGene(Gender.MALE, "A", true);
+		Chromosome.mapTypeToGene(Gender.MALE, "M", true);
+		Chromosome.mapTypeToGene(Gender.MALE, "A", false);
 		Chromosome.mapTypeToGene(Gender.FEMALE, "P", false);
 		Chromosome.mapTypeToGene(Gender.FEMALE, "S", true);
 		
@@ -49,9 +49,9 @@ public class Simulator {
 		pop.setState(initState);
 		//System.out.println(pop);
 		while(!pop.isStable()) {
-			Thread.sleep(2);
-			//System.out.println(pop);
-			//pop.saveState();
+			Thread.sleep(100);
+			//System.out.println(pop.getActiveCount());
+			//System.out.println(Hotel.bar.size());
 		}
 		pop.shutdownNow();
 		while(!pop.isTerminated()) {

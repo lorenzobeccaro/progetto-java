@@ -20,6 +20,10 @@ public class Bar {
 				seats.add(client);
 			}
 		}
+		
+		public int size() {
+			return seats.size();
+		}
 
 		public synchronized Human offerADrink() throws InterruptedException {
 			while (isEmpty()) {

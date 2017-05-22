@@ -1,3 +1,4 @@
+import java.util.concurrent.TimeoutException;
 
 public class Human implements Runnable {
 
@@ -9,13 +10,15 @@ public class Human implements Runnable {
 	public Chromosome mother;
 	 
 	
-	public static final int MAX_CHILDREN = 20;
-	public static final int MAX_DATES = 6000;
-	public static final int HAPPINESS_THRESHOLD = 8000;
+	public static final int MAX_CHILDREN = 6;
+	public static final int MAX_DATES = 800000;
+	public static final int HAPPINESS_THRESHOLD = 15000;
 	
 	private int childCount = 0;
 	private int dateCount = 0;
 	private int happiness = 0;
+	
+	private boolean awaken = false;
 
 	public Human(String type) {
 		this.chromosome = new Chromosome(type);
@@ -35,7 +38,11 @@ public class Human implements Runnable {
 			while(this.dateCount < MAX_DATES && this.childCount < MAX_CHILDREN && !Simulator.getPopulation().isShutdown()) {
 				if(this.chromosome.getGender() == Gender.FEMALE) {
 					Hotel.bar.sit(this);
-					wait(0,10);
+					wait(10);
+					if(!awaken)
+						throw new TimeoutException();
+					else
+						awaken = false;
 					if(this.partnerChromosome != null)
 						generate();
 				} else {
@@ -45,6 +52,9 @@ public class Human implements Runnable {
 					}
 				}
 			}
+		} catch (TimeoutException e) {
+			//e.printStackTrace();
+			Simulator.getPopulation().addHuman(this.copy());
 		} catch (InterruptedException e) {
 			//e.printStackTrace();
 		}
@@ -53,14 +63,16 @@ public class Human implements Runnable {
 	
 	private synchronized void dateWith(Human partner) {
 		if(isHappy() && partner.isHappy()) {
-			inseminate(partner);
+			if(!(this.getType() == "A" && partner.getType() == "P"))
+				inseminate(partner);
 		}
-		//System.out.println(this);
+		//System.out.println(this+" is dating w/ "+partner);
 		PayOffsMatrix m = Simulator.getMatrix();
 		this.happiness += m.getPayOff(getType(), partner.getType());
 		partner.happiness += m.getPayOff(partner.getType(), getType());
 		this.dateCount++;
 		partner.dateCount++;
+		partner.awaken = true;
 		partner.awake();
 	}
 
@@ -85,10 +97,11 @@ public class Human implements Runnable {
 	
 	private synchronized void generate() {
 		Human child = new Human(new Chromosome(partnerChromosome,chromosome));
+		child.mother = this.chromosome;
+		child.father = partnerChromosome;
 		Simulator.getPopulation().addHuman(child);
 		this.partnerChromosome = null;
 		
-		//Simulator.getPopulation().saveState();
 		//System.out.println(Simulator.getPopulation());
 	}
 
