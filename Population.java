@@ -1,66 +1,34 @@
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
-class Population extends ThreadPoolExecutor {
-  private boolean isPaused;
-  private ReentrantLock pauseLock = new ReentrantLock();
-  private Condition unpaused = pauseLock.newCondition();
+class Population {
+	private boolean isStopped;
   
-  private Map<String,String> observingData = new HashMap<String,String>();
+  	private Map<String,String> observingData = new HashMap<String,String>();
 	private volatile List<SimulationState> states = Collections.synchronizedList(new LinkedList<SimulationState>());
 	
 	private volatile List<Human> humans = Collections.synchronizedList(new LinkedList<Human>());
+	
+	public volatile List<SubPopulation> threadPools = Collections.synchronizedList(new ArrayList<SubPopulation>());
 
-	private static final int MAX_STATES = 120;
-	private static final int STEPS = 100;
+	private int MAX_THREADS = 2000;
+	private int MAX_STATES;
+	private int STEPS;
 	private SimulationState result;
 	private volatile int changes = 0;
+	
+	public Population(int steps) {
+		STEPS = steps;
+		MAX_STATES = 1000/steps;
+		System.out.println("Simulation running with "+steps+" steps.");
+		System.out.println("Minimum states: "+MAX_STATES);
+	}
 	
 	@Override
 	public String toString() {
 		return this.getState().toString();
 	}
-
-  public Population() {
-  	super(20000, 200000, 1, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-  	
-  }
-
-  @Override
-  protected void beforeExecute(Thread t, Runnable r) {
-    super.beforeExecute(t, r);
-    pauseLock.lock();
-    try {
-      while (isPaused) unpaused.await();
-    } catch (InterruptedException ie) {
-      t.interrupt();
-    } finally {
-      pauseLock.unlock();
-    }
-  }
-
-  public void pause() {
-    pauseLock.lock();
-    try {
-      isPaused = true;
-    } finally {
-      pauseLock.unlock();
-    }
-    System.out.println("PAUSED");
-  }
-
-  public void resume() {
-    pauseLock.lock();
-    try {
-      isPaused = false;
-      unpaused.signalAll();
-    } finally {
-      pauseLock.unlock();
-    }
-  }
 
 	public void observeData(String string, String string2) {
 		this.getObservingData().put(string, string2);
@@ -73,44 +41,82 @@ class Population extends ThreadPoolExecutor {
 				Human newHuman = k.copy();
 				list.add(newHuman);
 			}
+			threadPools.add(new SubPopulation(k.getType()));
 		}
 		Collections.shuffle(list);
+		this.isStopped = true;
 		for(Human h : list) {
 			addHuman(h);
 		}
+		this.isStopped = false;
 	}
 	
 	public synchronized SimulationState getState() {
 		return new SimulationState(this.humans);
 	}
 
-	public synchronized void addHuman(Human h) {
-		try {
-			this.execute(h);
-			this.humans.add(h);
-			change();
-		} catch (Exception e) {
-			// human rejected
-			//System.out.println(h+" rejected");
+	public void addHuman(Human h) {
+		humans.add(h);
+		change();
+		String type = h.getType();
+		for(SubPopulation p : threadPools) {
+			if(p.getName().equals(type)) {
+				try {
+					p.execute(h);
+				} catch (Exception e) {
+					//e.printStackTrace();
+				}
+				return;
+			}
 		}
-		
 	}
 	
-	public void removeHuman(Human h) {
-		this.remove(h);
+	public synchronized void removeHuman(Human h) {
+		String type = h.getType();
+		for(SubPopulation p : threadPools) {
+			if(p.getName() == type) {
+				p.remove(h);
+			}
+		}
 		this.humans.remove(h);
 		change();
 	}
 	
-	private void change() {
+	private synchronized void change() {
 		this.changes++;
-		System.out.print(".");
+		if(changes % (STEPS/100) == 0) {
+			System.out.print("*");
+		}
 		if(changes>STEPS) {
-			saveState();
+			update();
 			changes = 0;
+			System.out.println("0%"+new String(new char[94]).replace('\0', ' ')+"100%");
 		}
 	}
 	
+	private void update() {
+		SimulationState current = saveState();
+		//System.out.println(threadPools);
+		for(SubPopulation p : this.threadPools) {
+			//current.getFemaleAvgHappiness();
+			p.setCorePoolSize((int)Math.round(current.getPercentages().get(p.getName())/100*MAX_THREADS));
+		}
+	}
+	
+	public int getAvgHappiness(Gender g) {
+		if(states.size() == 0)
+			return 10;
+			
+		SimulationState current = getCurrentState();
+		//int avgHapp = (g == Gender.FEMALE ? current.getFemaleAvgHappiness() : current.getMaleAvgHappiness());
+		int avgHapp = (current.getFemaleAvgHappiness()+current.getMaleAvgHappiness())/2;
+		return avgHapp;
+	}
+	
+	private SimulationState getCurrentState() {
+		return this.states.get(0);
+	}
+
 	private boolean singleGender() {
 		Queue<Human> snap = new LinkedList<Human>(humans);
 		Human current = snap.poll();
@@ -149,14 +155,15 @@ class Population extends ThreadPoolExecutor {
 		return true;
 	}
 	
-	public synchronized void saveState() {
+	public synchronized SimulationState saveState() {
 		SimulationState state = getState();
-		this.states.add(state);
+		this.states.add(0,state);
 		while(states.size()>MAX_STATES) {
-			this.states.remove(0);
+			this.states.remove(this.states.get(states.size()-1));
 		}
 		System.out.println();
 		System.out.println(state);
+		return state;
 	}
 
 	public SimulationState getResult() {
@@ -170,4 +177,56 @@ class Population extends ThreadPoolExecutor {
 	public void setObservingData(Map<String,String> observingData) {
 		this.observingData = observingData;
 	}
+	
+	public class SubPopulation extends ThreadPoolExecutor {
+		private String name;
+		
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public SubPopulation(String name) {
+		  	super(500, 10000, 1, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+		  	setName(name);
+		}
+	}
+
+	public synchronized void stop() {
+		isStopped = true;
+		for(SubPopulation p : threadPools) {
+			p.shutdownNow();
+		}
+	}
+
+	public boolean isStopped() {
+		return isStopped;
+	}
+	
+	public void genealogicalTree() {
+		Human root = getRandomHuman();;
+		//printBinaryTree(root.getChromosome(),0);
+		TreePrinter.print(root.getChromosome());
+	}
+
+	private Human getRandomHuman() {
+		return humans.get((int)(Math.random()*humans.size())-1);
+	}
+	
+	public static void printBinaryTree(Chromosome root, int level){
+	    if(root==null)
+	         return;
+	    printBinaryTree(root.getRight(), level+1);
+	    if(level!=0){
+	        for(int i=0;i<level-1;i++)
+	            System.out.print("    |\t");
+	            System.out.println("    |---"+root.toString());
+	    }
+	    else
+	        System.out.println(root.toString());
+	    printBinaryTree(root.getLeft(), level+1);
+	} 
 }

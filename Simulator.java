@@ -1,6 +1,8 @@
 
 import java.util.*;
 
+
+
 public class Simulator {
 	
 	private static Population population;
@@ -41,7 +43,7 @@ public class Simulator {
 		initState.put(P, 100);
 		initState.put(S, 100);
 		
-		Population pop = new Population();	
+		Population pop = new Population(100);	
 		setPopulation(pop);
 		
 		pop.observeData("P", "S");
@@ -49,18 +51,19 @@ public class Simulator {
 		pop.setState(initState);
 		//System.out.println(pop);
 		while(!pop.isStable()) {
-			Thread.sleep(100);
-			//System.out.println(pop.getActiveCount());
+			Thread.sleep(10);
+			for(Population.SubPopulation s : getPopulation().threadPools) {
+				//System.out.println(s.getName()+": "+s.getActiveCount());
+			}
 			//System.out.println(Hotel.bar.size());
+			//System.out.println("NUMERO POOL: "+pop.threadPools.size());
 		}
-		pop.shutdownNow();
-		while(!pop.isTerminated()) {
-			//System.out.println(pop);
-			Thread.sleep(100);
-		}
+		pop.stop();
+		Thread.sleep(1000);
 		System.out.println("DONE");
 		System.out.println("---RESULT---" + pop.getResult());
 		
+		pop.genealogicalTree();
 
 	}
 

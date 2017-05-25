@@ -5,20 +5,13 @@ public class Human implements Runnable {
 	private Chromosome chromosome;
 	private Chromosome partnerChromosome;
 	
-	// ALBERO GENEALOGICO
-	public Chromosome father;
-	public Chromosome mother;
 	 
 	
-	public static final int MAX_CHILDREN = 6;
-	public static final int MAX_DATES = 800000;
-	public static final int HAPPINESS_THRESHOLD = 15000;
+	public static final int MAX_DATES = 100;
 	
 	private int childCount = 0;
 	private int dateCount = 0;
 	private int happiness = 0;
-	
-	private boolean awaken = false;
 
 	public Human(String type) {
 		this.chromosome = new Chromosome(type);
@@ -34,16 +27,17 @@ public class Human implements Runnable {
 	
 	@Override
 	public synchronized void run() {
+		while(Simulator.getPopulation().isStopped());
 		try {
-			while(this.dateCount < MAX_DATES && this.childCount < MAX_CHILDREN && !Simulator.getPopulation().isShutdown()) {
+			while(this.dateCount < MAX_DATES) {
+				
+				if(Thread.currentThread().isInterrupted())
+					return;
+				
 				if(this.chromosome.getGender() == Gender.FEMALE) {
 					Hotel.bar.sit(this);
-					wait(10);
-					if(!awaken)
-						throw new TimeoutException();
-					else
-						awaken = false;
-					if(this.partnerChromosome != null)
+					wait();
+					if(this.partnerChromosome != null && !Simulator.getPopulation().isStopped())
 						generate();
 				} else {
 					Human partner = Hotel.bar.offerADrink();
@@ -52,9 +46,6 @@ public class Human implements Runnable {
 					}
 				}
 			}
-		} catch (TimeoutException e) {
-			//e.printStackTrace();
-			Simulator.getPopulation().addHuman(this.copy());
 		} catch (InterruptedException e) {
 			//e.printStackTrace();
 		}
@@ -66,23 +57,36 @@ public class Human implements Runnable {
 			if(!(this.getType() == "A" && partner.getType() == "P"))
 				inseminate(partner);
 		}
+		
+		if(partner.getType().equals("S")) {
+			//System.out.println(partner);
+		}
+		
 		//System.out.println(this+" is dating w/ "+partner);
 		PayOffsMatrix m = Simulator.getMatrix();
-		this.happiness += m.getPayOff(getType(), partner.getType());
-		partner.happiness += m.getPayOff(partner.getType(), getType());
+		this.changeHappiness(m.getPayOff(getType(), partner.getType()));
+		partner.changeHappiness(m.getPayOff(partner.getType(), getType()));
 		this.dateCount++;
 		partner.dateCount++;
-		partner.awaken = true;
 		partner.awake();
+	}
+	
+	private void changeHappiness(int value) {
+		this.happiness += value;
+	}
+	
+	public int getHappiness() {
+		return this.happiness;
 	}
 
 	private void die() {
-		Simulator.getPopulation().removeHuman(this);
+		if(!Simulator.getPopulation().isStopped())
+			Simulator.getPopulation().removeHuman(this);
 		//System.out.println(this);
 	}
 	
 	public boolean isHappy() {
-		return this.happiness >= HAPPINESS_THRESHOLD;
+		return this.happiness >= Simulator.getPopulation().getAvgHappiness(getGender());
 	}
 
 	private void inseminate(Human partner) {
@@ -97,12 +101,8 @@ public class Human implements Runnable {
 	
 	private synchronized void generate() {
 		Human child = new Human(new Chromosome(partnerChromosome,chromosome));
-		child.mother = this.chromosome;
-		child.father = partnerChromosome;
 		Simulator.getPopulation().addHuman(child);
 		this.partnerChromosome = null;
-		
-		//System.out.println(Simulator.getPopulation());
 	}
 
 	public String getType() {
@@ -117,15 +117,13 @@ public class Human implements Runnable {
 		this.chromosome = c;
 	}
 	
+	public Chromosome getChromosome() {
+		return this.chromosome;
+	}
+	
 	@Override
 	public String toString() {
-		String s = "";
-		s += this.getType();
-		s += "("+this.chromosome+")";
-		s += " h="+this.happiness;
-		s += " c="+this.childCount;
-		s += " d="+this.dateCount;
-		return s;
+		return this.chromosome.toString();
 	}
 	
 	public Human copy() {

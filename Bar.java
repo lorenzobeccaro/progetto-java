@@ -32,5 +32,4 @@ public class Bar {
 			Human woman = seats.poll();
 			return woman;
 		}	
-
 	}

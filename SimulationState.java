@@ -6,17 +6,18 @@ public class SimulationState {
 	private Map<String,Integer> population;
 	private Map<String,Double> percentages;
 	
-	private final double ERROR = 0.0001;
-
-	public SimulationState() {
-		
-	}
+	private int MaleAvgHappiness;
+	private int FemaleAvgHappiness;
+	
+	private final double ERROR = 0.5;
 
 	public SimulationState(List<Human> list) {
 		Map<String,Integer> types = new TreeMap<String,Integer>();
 		Map<String,Double> perc = new TreeMap<String,Double>();
 		List<Human> snapshot = new LinkedList<Human>(list);
 		//System.out.println(snapshot);
+		int females = 0;
+		int males = 0;
 		for(Human h : snapshot) {
 			//System.out.println(h);
 			if(h==null) continue;
@@ -25,13 +26,32 @@ public class SimulationState {
 			} else {
 				types.put(h.getType(), 1);
 			}
+			
+			if(h.getGender() == Gender.FEMALE) {
+				this.FemaleAvgHappiness += h.getHappiness();
+				females++;
+			} else {
+				this.MaleAvgHappiness += h.getHappiness();
+				males++;
+			}
 		}
+		
+		this.MaleAvgHappiness /= males;
+		this.FemaleAvgHappiness /= females;
 		this.population = types;
 		for(String k : types.keySet()) {
 			perc.put(k, (types.get(k)*100d/getPopulationNumber()));
 		}
 		this.percentages = perc;
 		//System.out.println(types);
+	}
+	
+	public int getMaleAvgHappiness() {
+		return this.MaleAvgHappiness;
+	}
+	
+	public int getFemaleAvgHappiness() {
+		return this.FemaleAvgHappiness;
 	}
 
 	public Map<String, Integer> getPopulation() {
@@ -68,7 +88,8 @@ public class SimulationState {
 			s += ": "+df.format(data.get(k));
 			s += " ";
 		}
-
+		s += "  Average happiness: ";
+		s += "M = "+this.MaleAvgHappiness+" F = "+this.FemaleAvgHappiness;
 		return s;
 	}
 
@@ -96,14 +117,14 @@ public class SimulationState {
 	}
 
 	public boolean isNear(SimulationState otherState) {
-		Map<String,Integer> data,otherData;
-		data = this.getPopulation();
-		otherData = otherState.getPopulation();
+		Map<String,Double> data,otherData;
+		data = this.getPercentages();
+		otherData = otherState.getPercentages();
 		for(String k : data.keySet()) {
 			if(otherData.containsKey(k)) {
 				double perc1, perc2;
-				perc1 = data.get(k)/this.getPopulationNumber();
-				perc2 = otherData.get(k)/otherState.getPopulationNumber();
+				perc1 = data.get(k);
+				perc2 = otherData.get(k);
 				if(!almostEqual(perc1,perc2, ERROR)) {
 					//System.out.println(""+data.get(k)+" "+otherData.get(k));
 					return false;
@@ -118,7 +139,7 @@ public class SimulationState {
 	}
 
 	private boolean almostEqual(double a, double b, double eps){
-		//System.out.println(Math.abs(a-b)+"<"+eps);
+		//System.out.println(""+a+" + "+b+" = "+Math.abs(a-b)+"<"+eps+" : "+(Math.abs(a-b)<eps));
 		return Math.abs(a-b)<eps;
 	}
 

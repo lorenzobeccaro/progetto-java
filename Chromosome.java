@@ -3,13 +3,16 @@
 import java.util.*;
 
 
-public class Chromosome {
+public class Chromosome implements TreePrinter.PrintableNode {
 	private static Map<String,Gender> type2gender = new HashMap<String,Gender>();
 	private static Map<String,Character> maleType2gene = new HashMap<String,Character>();;
 	private static Map<String,Character> femaleType2gene = new HashMap<String,Character>();;
 	private Gene maleGene;
 	private Gene femaleGene;
 	private Gender gender;
+	
+	private Chromosome father;
+	private Chromosome mother;
 	
 	public Chromosome(Gene mGene, Gene fGene) {
 		this.maleGene = mGene;
@@ -27,6 +30,9 @@ public class Chromosome {
 	
 	public Chromosome(Chromosome father, Chromosome mother) {
 		
+		this.father = father;
+		this.mother = mother;
+		
 		if(father.femaleGene == null || mother.maleGene == null) {
 			this.maleGene = father.maleGene;
 			this.femaleGene = mother.femaleGene;
@@ -41,6 +47,18 @@ public class Chromosome {
 			this.gender = Gender.FEMALE;
 		}
 		
+	}
+	
+	public Chromosome getLeft() {
+		return father;
+	}
+	
+	public Chromosome getRight() {
+		return mother;
+	}
+	
+	public String getText() {
+		return this.toString();
 	}
 	
 	public static void mapTypeToGene(Gender gender,String type, boolean dominant) {
@@ -85,9 +103,9 @@ public class Chromosome {
 	
 	@Override
 	public String toString() {
-		String s = "";
-		s += "["+this.maleGene+"]";
-		s += "["+this.femaleGene+"]";
+		String s = ""+this.getType()+"";
+		s += "(["+this.maleGene+"]";
+		s += "["+this.femaleGene+"])";
 		return s;
 	}
 
