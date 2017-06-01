@@ -6,18 +6,16 @@ public class SimulationState {
 	private Map<String,Integer> population;
 	private Map<String,Double> percentages;
 	
-	private int MaleAvgHappiness;
-	private int FemaleAvgHappiness;
+	private Map<String,Double> averageHappiness = new TreeMap<String,Double>();
 	
-	private final double ERROR = 0.5;
+	private final double ERROR = 0.01;
 
-	public SimulationState(List<Human> list) {
+	public SimulationState(List<Human> list, List<Human> active) {
 		Map<String,Integer> types = new TreeMap<String,Integer>();
 		Map<String,Double> perc = new TreeMap<String,Double>();
 		List<Human> snapshot = new LinkedList<Human>(list);
 		//System.out.println(snapshot);
-		int females = 0;
-		int males = 0;
+		
 		for(Human h : snapshot) {
 			//System.out.println(h);
 			if(h==null) continue;
@@ -27,31 +25,38 @@ public class SimulationState {
 				types.put(h.getType(), 1);
 			}
 			
-			if(h.getGender() == Gender.FEMALE) {
-				this.FemaleAvgHappiness += h.getHappiness();
-				females++;
+		}
+		
+		Map<String,Integer> activeTypes = new TreeMap<String,Integer>();
+		snapshot = new LinkedList<Human>(active);
+		for(Human h : snapshot) {
+			//System.out.println(h);
+			if(h==null) continue;
+			if(activeTypes.containsKey(h.getType())) {
+				activeTypes.put(h.getType(), activeTypes.get(h.getType())+1);
 			} else {
-				this.MaleAvgHappiness += h.getHappiness();
-				males++;
+				activeTypes.put(h.getType(), 1);
+			}
+			
+		}
+		
+		for(Human h : snapshot) {
+			if(h==null) continue;
+			if(averageHappiness.containsKey(h.getType())) {
+				averageHappiness.put(h.getType(),averageHappiness.get(h.getType())+h.getHappiness());
+			} else {
+				averageHappiness.put(h.getType(), h.getHappiness());
 			}
 		}
 		
-		this.MaleAvgHappiness /= males;
-		this.FemaleAvgHappiness /= females;
 		this.population = types;
 		for(String k : types.keySet()) {
 			perc.put(k, (types.get(k)*100d/getPopulationNumber()));
+			if(activeTypes.containsKey(k))
+				averageHappiness.put(k, averageHappiness.get(k)/activeTypes.get(k));
 		}
 		this.percentages = perc;
 		//System.out.println(types);
-	}
-	
-	public int getMaleAvgHappiness() {
-		return this.MaleAvgHappiness;
-	}
-	
-	public int getFemaleAvgHappiness() {
-		return this.FemaleAvgHappiness;
 	}
 
 	public Map<String, Integer> getPopulation() {
@@ -77,19 +82,60 @@ public class SimulationState {
 		Map<String,Double> perc = this.percentages;
 		int humanNumber = this.getPopulationNumber();
 		DecimalFormat df = new DecimalFormat("#.##");
-		for(String k : perc.keySet()) {
-			s += k+": "+df.format(perc.get(k))+"% "+state.get(k)+" ";
+		
+		final int MAX_COLS = 80;
+		final int MAX_LINES = 10;
+		int num_types = perc.keySet().size();
+		
+		for(int i=0;i<MAX_LINES;i++) {
+			
+			for(String k : perc.keySet()) {
+				String spaces = new String(new char[MAX_COLS/num_types]).replace('\0', ' ');
+				s += spaces;
+				if(perc.get(k)>(MAX_LINES-i)*100/MAX_LINES)
+					s += "|";
+				else {
+					s += " ";
+				}
+				
+			}
+			s += "\n";
 		}
-		s += "population: "+humanNumber;
-		s += '\n';
+
+		int prev = 0;
+		for(String k : perc.keySet()) {
+			String info = k+": "+df.format(perc.get(k))+"% "+state.get(k)+" ";
+			int current_spaces = info.length()/2;
+			String spaces = new String(new char[(MAX_COLS/num_types)-(current_spaces+prev)]).replace('\0', ' ');
+			s += spaces+info;
+			prev = current_spaces;
+		}
+		prev = 0;
+		s += "\n";
+		for(Population.SubPopulation t : Simulator.getPopulation().threadPools) {
+			String info = "Threads "+t.getName()+": "+t.getActiveCount();
+			int current_spaces = info.length()/2;
+			String spaces = new String(new char[(MAX_COLS/num_types)-(current_spaces+prev)]).replace('\0', ' ');
+			s += spaces+info;
+			prev = current_spaces;
+		}
+		s += "\npopulation: "+humanNumber;
+		s += "\nThreads: "+Simulator.getPopulation().getTotalThreads()+"\n";
+		s += "Active Humans: "+Simulator.getPopulation().alive.size()+"\n";
 		Map<String,Double> data = this.getObservingData();
 		for(String k : data.keySet()) {
 			s += k;
 			s += ": "+df.format(data.get(k));
 			s += " ";
 		}
-		s += "  Average happiness: ";
-		s += "M = "+this.MaleAvgHappiness+" F = "+this.FemaleAvgHappiness;
+		s += "  Avg happiness: ";
+		for(String k : averageHappiness.keySet()) {
+			s += k;
+			s += ": "+df.format(averageHappiness.get(k));
+			s += " ";
+		}
+		s += " Male: "+df.format(Simulator.getPopulation().getThresholdForGender(Gender.MALE,this));
+		s += " Female: "+df.format(Simulator.getPopulation().getThresholdForGender(Gender.FEMALE,this));
 		return s;
 	}
 
@@ -141,6 +187,13 @@ public class SimulationState {
 	private boolean almostEqual(double a, double b, double eps){
 		//System.out.println(""+a+" + "+b+" = "+Math.abs(a-b)+"<"+eps+" : "+(Math.abs(a-b)<eps));
 		return Math.abs(a-b)<eps;
+	}
+
+	public double getAverageHappiness(String type) {
+		if(averageHappiness.containsKey(type))
+			return averageHappiness.get(type);
+		else
+			return 0;
 	}
 
 }

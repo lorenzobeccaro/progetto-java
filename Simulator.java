@@ -17,8 +17,8 @@ public class Simulator {
 		int c = 3;
 		
 		Chromosome.mapTypeToGene(Gender.MALE, "M", true);
-		Chromosome.mapTypeToGene(Gender.MALE, "A", false);
-		Chromosome.mapTypeToGene(Gender.FEMALE, "P", false);
+		Chromosome.mapTypeToGene(Gender.MALE, "A", true);
+		Chromosome.mapTypeToGene(Gender.FEMALE, "P", true);
 		Chromosome.mapTypeToGene(Gender.FEMALE, "S", true);
 		
 		PayOffsMatrix m = new PayOffsMatrix();
@@ -30,20 +30,18 @@ public class Simulator {
 		setMatrix(m);
 		
 		System.out.println(m);
-		
-		
 				
 		Human M = new Human("M");
 		Human A = new Human("A");
 		Human P = new Human("P");
 		Human S = new Human("S");
 		
-		initState.put(M, 100);
-		initState.put(A, 100);
-		initState.put(P, 100);
-		initState.put(S, 100);
+		initState.put(M, 1000);
+		initState.put(A, 1000);
+		initState.put(P, 1000);
+		initState.put(S, 1000);
 		
-		Population pop = new Population(100);	
+		Population pop = new Population();	
 		setPopulation(pop);
 		
 		pop.observeData("P", "S");
@@ -51,10 +49,8 @@ public class Simulator {
 		pop.setState(initState);
 		//System.out.println(pop);
 		while(!pop.isStable()) {
-			Thread.sleep(10);
-			for(Population.SubPopulation s : getPopulation().threadPools) {
-				//System.out.println(s.getName()+": "+s.getActiveCount());
-			}
+			
+			
 			//System.out.println(Hotel.bar.size());
 			//System.out.println("NUMERO POOL: "+pop.threadPools.size());
 		}
@@ -64,7 +60,7 @@ public class Simulator {
 		System.out.println("---RESULT---" + pop.getResult());
 		
 		pop.genealogicalTree();
-
+		System.out.println("Exiting...");
 	}
 
 	public static Population getPopulation() {

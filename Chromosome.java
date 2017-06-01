@@ -49,6 +49,11 @@ public class Chromosome implements TreePrinter.PrintableNode {
 		
 	}
 	
+	public Chromosome() {
+		this.maleGene = new Gene();
+		this.femaleGene = new Gene();
+	}
+
 	public Chromosome getLeft() {
 		return father;
 	}
@@ -59,6 +64,16 @@ public class Chromosome implements TreePrinter.PrintableNode {
 	
 	public String getText() {
 		return this.toString();
+	}
+	
+	public static List<String> getTypesByGender(Gender g) {
+		List<String> list = new ArrayList<String>();
+		for(String t : type2gender.keySet()) {
+			if(type2gender.get(t)==g)
+				list.add(t);
+		}
+			
+		return list;
 	}
 	
 	public static void mapTypeToGene(Gender gender,String type, boolean dominant) {
@@ -131,6 +146,11 @@ public class Chromosome implements TreePrinter.PrintableNode {
 			this.x2 = geneMap.get(type);
 		}
 
+		public Gene() {
+			this.x1 = '\0';
+			this.x2 = '\0';
+		}
+
 		public char getType() {
 			char c;
 			if(isDominant(this.x1)) {
@@ -152,6 +172,14 @@ public class Chromosome implements TreePrinter.PrintableNode {
 			return ""+this.x1+this.x2;
 		}
 
+	}
+
+	public static List<String> getTypes() {
+		return new LinkedList<String>(type2gender.keySet());
+	}
+
+	public static Gender getGenderByType(String type) {
+		return type2gender.get(type);
 	}
 
 
