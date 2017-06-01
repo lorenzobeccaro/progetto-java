@@ -17,8 +17,8 @@ public class Simulator {
 		int c = 3;
 		
 		Chromosome.mapTypeToGene(Gender.MALE, "M", true);
-		Chromosome.mapTypeToGene(Gender.MALE, "A", true);
-		Chromosome.mapTypeToGene(Gender.FEMALE, "P", true);
+		Chromosome.mapTypeToGene(Gender.MALE, "A", false);
+		Chromosome.mapTypeToGene(Gender.FEMALE, "P", false);
 		Chromosome.mapTypeToGene(Gender.FEMALE, "S", true);
 		
 		PayOffsMatrix m = new PayOffsMatrix();
@@ -59,7 +59,7 @@ public class Simulator {
 		System.out.println("DONE");
 		System.out.println("---RESULT---" + pop.getResult());
 		
-		pop.genealogicalTree();
+		//pop.genealogicalTree();
 		System.out.println("Exiting...");
 	}
 

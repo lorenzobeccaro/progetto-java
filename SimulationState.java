@@ -6,8 +6,6 @@ public class SimulationState {
 	private Map<String,Integer> population;
 	private Map<String,Double> percentages;
 	
-	private Map<String,Double> averageHappiness = new TreeMap<String,Double>();
-	
 	private final double ERROR = 0.01;
 
 	public SimulationState(List<Human> list, List<Human> active) {
@@ -40,20 +38,9 @@ public class SimulationState {
 			
 		}
 		
-		for(Human h : snapshot) {
-			if(h==null) continue;
-			if(averageHappiness.containsKey(h.getType())) {
-				averageHappiness.put(h.getType(),averageHappiness.get(h.getType())+h.getHappiness());
-			} else {
-				averageHappiness.put(h.getType(), h.getHappiness());
-			}
-		}
-		
 		this.population = types;
 		for(String k : types.keySet()) {
-			perc.put(k, (types.get(k)*100d/getPopulationNumber()));
-			if(activeTypes.containsKey(k))
-				averageHappiness.put(k, averageHappiness.get(k)/activeTypes.get(k));
+			perc.put(k, (types.get(k).doubleValue()/getPopulationNumber()));
 		}
 		this.percentages = perc;
 		//System.out.println(types);
@@ -74,6 +61,19 @@ public class SimulationState {
 	public void setPercentages(Map<String, Double> percentages) {
 		this.percentages = percentages;
 	}
+	
+	public double getHappiness(String type) {
+		PayOffsMatrix m = Simulator.getMatrix();
+		double happiness = 0;
+		double weight = 0;
+		for(String t : this.getPercentages().keySet()) {
+			if(!Chromosome.getGenderByType(t).equals(Chromosome.getGenderByType(type))) {
+				happiness += this.getPercentages().get(t)*m.getPayOff(type, t);
+				weight += this.getPercentages().get(t);
+			}
+		}
+		return happiness/weight;
+	}
 
 	@Override
 	public String toString() {
@@ -92,7 +92,7 @@ public class SimulationState {
 			for(String k : perc.keySet()) {
 				String spaces = new String(new char[MAX_COLS/num_types]).replace('\0', ' ');
 				s += spaces;
-				if(perc.get(k)>(MAX_LINES-i)*100/MAX_LINES)
+				if(perc.get(k)*100>(MAX_LINES-i)*100/MAX_LINES)
 					s += "|";
 				else {
 					s += " ";
@@ -104,7 +104,7 @@ public class SimulationState {
 
 		int prev = 0;
 		for(String k : perc.keySet()) {
-			String info = k+": "+df.format(perc.get(k))+"% "+state.get(k)+" ";
+			String info = k+": "+df.format(perc.get(k)*100)+"% "+state.get(k)+" ";
 			int current_spaces = info.length()/2;
 			String spaces = new String(new char[(MAX_COLS/num_types)-(current_spaces+prev)]).replace('\0', ' ');
 			s += spaces+info;
@@ -129,9 +129,9 @@ public class SimulationState {
 			s += " ";
 		}
 		s += "  Avg happiness: ";
-		for(String k : averageHappiness.keySet()) {
+		for(String k : perc.keySet()) {
 			s += k;
-			s += ": "+df.format(averageHappiness.get(k));
+			s += ": "+df.format(Simulator.getPopulation().getHappiness(k));
 			s += " ";
 		}
 		s += " Male: "+df.format(Simulator.getPopulation().getThresholdForGender(Gender.MALE,this));
@@ -187,13 +187,6 @@ public class SimulationState {
 	private boolean almostEqual(double a, double b, double eps){
 		//System.out.println(""+a+" + "+b+" = "+Math.abs(a-b)+"<"+eps+" : "+(Math.abs(a-b)<eps));
 		return Math.abs(a-b)<eps;
-	}
-
-	public double getAverageHappiness(String type) {
-		if(averageHappiness.containsKey(type))
-			return averageHappiness.get(type);
-		else
-			return 0;
 	}
 
 }

@@ -13,6 +13,8 @@ class Population {
 	
 	public volatile List<SubPopulation> threadPools = Collections.synchronizedList(new ArrayList<SubPopulation>());
 
+	private volatile long lastChange;
+	
 	private int MAX_THREADS = 10000;
 	private int MAX_STATES;
 	private int STEPS;
@@ -20,7 +22,7 @@ class Population {
 	private volatile int changes = 0;
 	
 	public Population() {
-		int steps = 100;
+		int steps = 50;
 		STEPS = steps;
 		MAX_STATES = 10000/steps;
 		System.out.println("Simulation running with "+steps+" steps.");
@@ -94,8 +96,10 @@ class Population {
 	}
 	
 	private synchronized void change() {
+		
 		if(!isRunning())
 			return;
+		lastChange = System.currentTimeMillis();
 		this.changes++;
 		if(changes % ((double)STEPS/100) == 0) {
 			System.out.print("*");
@@ -115,7 +119,7 @@ class Population {
 		for(SubPopulation p : this.threadPools) {
 			//current.getFemaleAvgHappiness();
 			if(current.getPercentages().containsKey(p.getName()))
-					p.setCorePoolSize((int)Math.round(current.getPercentages().get(p.getName())/100*MAX_THREADS));
+					p.setCorePoolSize((int)Math.round(current.getPercentages().get(p.getName())*MAX_THREADS));
 		}
 	}
 	
@@ -163,7 +167,7 @@ class Population {
 		for(String t : types) {
 			if(!current.getPercentages().containsKey(t))
 				continue;
-			happiness += current.getAverageHappiness(t)*current.getPercentages().get(t);
+			happiness += current.getHappiness(t)*current.getPercentages().get(t);
 			weight += current.getPercentages().get(t);
 		}
 		happiness = happiness/weight;
@@ -191,7 +195,8 @@ class Population {
 
 	public synchronized boolean isStable() {
 		
-		
+		if(System.currentTimeMillis()-lastChange > 100)
+			change();
 		
 		if(this.humans.size()==0 || singleGender())
 			return true;
@@ -203,7 +208,7 @@ class Population {
 		//System.out.println(queue);
 		SimulationState lastState = null;
 		if(states.size()>=1) {
-			lastState = states.get(states.size()-1);
+			lastState = getCurrentState();
 			this.result = lastState;
 		}
 		
@@ -314,5 +319,17 @@ class Population {
 	
 	public void removeAlive(Human human) {
 		alive.remove(human);
+	}
+	
+	public double getHappiness(String type) {
+		if(states.size() == 0)
+			return 0;
+			
+		SimulationState current = getCurrentState();
+		return current.getHappiness(type);
+	}
+
+	public double getHappiness(Human human) {
+		return getHappiness(human.getType());
 	}
 }
