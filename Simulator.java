@@ -12,9 +12,9 @@ public class Simulator {
 		
 		Map<Human,Integer> initState = new HashMap<Human,Integer>();
 		
-		int a = 15;
-		int b = 20;
-		int c = 3;
+		int a = Integer.parseInt(args[0]); // 15
+		int b = Integer.parseInt(args[1]); // 20
+		int c = Integer.parseInt(args[2]); // 3
 		
 		Chromosome.mapTypeToGene(Gender.MALE, "M", true);
 		Chromosome.mapTypeToGene(Gender.MALE, "A", false);
@@ -59,7 +59,8 @@ public class Simulator {
 		System.out.println("DONE");
 		System.out.println("---RESULT---" + pop.getResult());
 		
-		//pop.genealogicalTree();
+		if(Arrays.asList(args).contains("-g"))
+			pop.genealogicalTree();
 		System.out.println("Exiting...");
 	}
 
