@@ -21,6 +21,10 @@ public class Bar {
 			}
 		}
 		
+		public synchronized void standUp(Human client) {
+			seats.remove(client);
+		}
+		
 		public int size() {
 			return seats.size();
 		}

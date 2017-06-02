@@ -6,7 +6,7 @@ public class SimulationState {
 	private Map<String,Integer> population;
 	private Map<String,Double> percentages;
 	
-	private final double ERROR = 0.01;
+	private final double ERROR = 0.001;
 
 	public SimulationState(List<Human> list, List<Human> active) {
 		Map<String,Integer> types = new TreeMap<String,Integer>();
@@ -84,7 +84,7 @@ public class SimulationState {
 		DecimalFormat df = new DecimalFormat("#.##");
 		
 		final int MAX_COLS = 80;
-		final int MAX_LINES = 10;
+		final int MAX_LINES = 50;
 		int num_types = perc.keySet().size();
 		
 		for(int i=0;i<MAX_LINES;i++) {

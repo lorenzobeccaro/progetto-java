@@ -18,7 +18,7 @@ class Population {
 	private int MAX_THREADS = 10000;
 	private int MAX_STATES;
 	private int STEPS;
-	private SimulationState result;
+
 	private volatile int changes = 0;
 	
 	public Population() {
@@ -195,8 +195,10 @@ class Population {
 
 	public synchronized boolean isStable() {
 		
-		if(System.currentTimeMillis()-lastChange > 100)
+		if(System.currentTimeMillis()-lastChange > 1000) {
+			saveState();
 			change();
+		}
 		
 		if(this.humans.size()==0 || singleGender())
 			return true;
@@ -206,11 +208,6 @@ class Population {
 		
 		Queue<SimulationState> queue = new LinkedList<SimulationState>(this.states);
 		//System.out.println(queue);
-		SimulationState lastState = null;
-		if(states.size()>=1) {
-			lastState = getCurrentState();
-			this.result = lastState;
-		}
 		
 		
 		while(queue.size()>1) {
@@ -233,7 +230,7 @@ class Population {
 	}
 
 	public SimulationState getResult() {
-		return result;
+		return getState();
 	}
 	
 	public Map<String,String> getObservingData() {

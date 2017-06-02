@@ -36,10 +36,10 @@ public class Simulator {
 		Human P = new Human("P");
 		Human S = new Human("S");
 		
-		initState.put(M, 1000);
-		initState.put(A, 1000);
-		initState.put(P, 1000);
-		initState.put(S, 1000);
+		initState.put(M, 100);
+		initState.put(A, 100);
+		initState.put(P, 100);
+		initState.put(S, 100);
 		
 		Population pop = new Population();	
 		setPopulation(pop);

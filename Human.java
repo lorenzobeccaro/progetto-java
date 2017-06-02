@@ -7,7 +7,7 @@ public class Human implements Runnable {
 	
 	 
 	
-	public static final int MAX_DATES = 800;
+	public static final int MAX_DATES = 100000;
 	public static final int MIN_CHILDREN = 1;
 	//public static final int DATES_RANGE = 100;
 	//public static final double HAPPINESS_RANGE = 0;
@@ -15,7 +15,6 @@ public class Human implements Runnable {
 	
 	private int childrenCount = 0;
 	private int dateCount = 0;
-	private int points = 0;
 
 
 	public Human(String type) {
@@ -40,13 +39,15 @@ public class Human implements Runnable {
 		Simulator.getPopulation().setAlive(this);
 		while(!Simulator.getPopulation().isRunning() && !Thread.currentThread().isInterrupted());
 		try {
-			while(dateCount<MAX_DATES || childrenCount<MIN_CHILDREN) {
+			while((childrenCount<MIN_CHILDREN) || !isSad()) {
 				
 				if(this.chromosome.getGender() == Gender.FEMALE) {
 					Hotel.bar.sit(this);
-					wait();
+					wait(10);
 					if(this.partnerChromosome != null && Simulator.getPopulation().isRunning())
 						generate();
+					else
+						Hotel.bar.standUp(this);
 				} else {
 					Human partner = Hotel.bar.offerADrink();
 					if(Simulator.getMatrix().areCompatible(getType(), partner.getType())) {
@@ -67,16 +68,9 @@ public class Human implements Runnable {
 		}
 		
 		//System.out.println(this+" is dating w/ "+partner);
-		PayOffsMatrix m = Simulator.getMatrix();
-		this.addPoints(m.getPayOff(getType(), partner.getType()));
-		partner.addPoints(m.getPayOff(partner.getType(), getType()));
 		this.dateCount++;
 		partner.dateCount++;
 		partner.awake();
-	}
-	
-	private void addPoints(int value) {
-		this.points += value;
 	}
 	
 	public double getHappiness() {
@@ -103,17 +97,18 @@ public class Human implements Runnable {
 	public synchronized boolean isHappy() {
 		String rival = getRival();
 		double rivalHappiness = Simulator.getPopulation().getHappiness(rival);
-		return getHappiness() >= rivalHappiness;
+		double happiness = getHappiness();
+		return happiness > rivalHappiness;
 	}
 	
 	public synchronized boolean isSad() {
-		double threshold = Simulator.getPopulation().getThreshold(this);
+		String rival = getRival();
+		double rivalHappiness = Simulator.getPopulation().getHappiness(rival);
 		double happiness = getHappiness();
-		if(happiness == 0) {
+		if(happiness < rivalHappiness) {
+			return Math.random() < Math.min(1, 1 - happiness/rivalHappiness);
+		} else
 			return false;
-		} else {
-			return happiness <= threshold;
-		}
 	}
 
 	private void inseminate(Human partner) {
