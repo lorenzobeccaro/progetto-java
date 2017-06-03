@@ -10,11 +10,22 @@ public class Simulator {
 
 	public static void main(String[] args) throws Exception {
 		
-		Map<Human,Integer> initState = new HashMap<Human,Integer>();
+		long initTime = System.currentTimeMillis();
 		
-		int a = Integer.parseInt(args[0]); // 15
-		int b = Integer.parseInt(args[1]); // 20
-		int c = Integer.parseInt(args[2]); // 3
+		List<String> listArgs = Arrays.asList(args);
+		int a,b,c;
+		
+		if(!listArgs.contains("-abc")) {
+			System.out.println("Arguments missing.");
+			return;
+		} else {
+			int index = listArgs.indexOf("-abc");
+			a = Integer.parseInt(args[index+1]); // 15
+			b = Integer.parseInt(args[index+2]); // 20
+			c = Integer.parseInt(args[index+3]); // 3
+		}
+		
+		Map<Human,Integer> initState = new HashMap<Human,Integer>();
 		
 		Chromosome.mapTypeToGene(Gender.MALE, "M", true);
 		Chromosome.mapTypeToGene(Gender.MALE, "A", false);
@@ -36,10 +47,10 @@ public class Simulator {
 		Human P = new Human("P");
 		Human S = new Human("S");
 		
-		initState.put(M, 100);
-		initState.put(A, 100);
-		initState.put(P, 100);
-		initState.put(S, 100);
+		initState.put(M, 25);
+		initState.put(A, 25);
+		initState.put(P, 25);
+		initState.put(S, 25);
 		
 		Population pop = new Population();	
 		setPopulation(pop);
@@ -59,9 +70,15 @@ public class Simulator {
 		System.out.println("DONE");
 		System.out.println("---RESULT---" + pop.getResult());
 		
-		if(Arrays.asList(args).contains("-g"))
+		if(listArgs.contains("-g"))
 			pop.genealogicalTree();
 		System.out.println("Exiting...");
+		long millis = System.currentTimeMillis()-initTime;
+		long seconds = (millis / 1000) % 60;
+		long minutes = (millis / (1000 * 60)) % 60;
+
+		String time = String.format("%02d:%02d", minutes, seconds);
+		System.out.println("Simulation time: "+time);
 	}
 
 	public static Population getPopulation() {

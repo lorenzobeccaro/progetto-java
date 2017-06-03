@@ -9,13 +9,9 @@ public class Human implements Runnable {
 	
 	public static final int MAX_DATES = 100000;
 	public static final int MIN_CHILDREN = 1;
-	//public static final int DATES_RANGE = 100;
-	//public static final double HAPPINESS_RANGE = 0;
 	
 	
 	private int childrenCount = 0;
-	private int dateCount = 0;
-
 
 	public Human(String type) {
 		this.chromosome = new Chromosome(type);
@@ -56,7 +52,6 @@ public class Human implements Runnable {
 				}
 			}
 		} catch (InterruptedException e) {
-			//System.out.print(" "+this.getType());
 			return;
 		}
 		die();
@@ -66,10 +61,6 @@ public class Human implements Runnable {
 		if(isHappy() && partner.isHappy()) {
 			inseminate(partner);
 		}
-		
-		//System.out.println(this+" is dating w/ "+partner);
-		this.dateCount++;
-		partner.dateCount++;
 		partner.awake();
 	}
 	
@@ -80,7 +71,6 @@ public class Human implements Runnable {
 	private void die() {
 		if(Simulator.getPopulation().isRunning())
 			Simulator.getPopulation().removeHuman(this);
-		//System.out.println(this);
 		Simulator.getPopulation().removeAlive(this);
 	}
 	
@@ -98,7 +88,7 @@ public class Human implements Runnable {
 		String rival = getRival();
 		double rivalHappiness = Simulator.getPopulation().getHappiness(rival);
 		double happiness = getHappiness();
-		return happiness > rivalHappiness;
+		return happiness >= rivalHappiness;
 	}
 	
 	public synchronized boolean isSad() {

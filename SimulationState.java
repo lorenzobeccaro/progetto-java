@@ -6,16 +6,14 @@ public class SimulationState {
 	private Map<String,Integer> population;
 	private Map<String,Double> percentages;
 	
-	private final double ERROR = 0.001;
+	private final double ERROR = 0.02;
 
-	public SimulationState(List<Human> list, List<Human> active) {
+	public SimulationState(List<Human> list) {
 		Map<String,Integer> types = new TreeMap<String,Integer>();
 		Map<String,Double> perc = new TreeMap<String,Double>();
 		List<Human> snapshot = new LinkedList<Human>(list);
-		//System.out.println(snapshot);
 		
 		for(Human h : snapshot) {
-			//System.out.println(h);
 			if(h==null) continue;
 			if(types.containsKey(h.getType())) {
 				types.put(h.getType(), types.get(h.getType())+1);
@@ -25,25 +23,11 @@ public class SimulationState {
 			
 		}
 		
-		Map<String,Integer> activeTypes = new TreeMap<String,Integer>();
-		snapshot = new LinkedList<Human>(active);
-		for(Human h : snapshot) {
-			//System.out.println(h);
-			if(h==null) continue;
-			if(activeTypes.containsKey(h.getType())) {
-				activeTypes.put(h.getType(), activeTypes.get(h.getType())+1);
-			} else {
-				activeTypes.put(h.getType(), 1);
-			}
-			
-		}
-		
 		this.population = types;
 		for(String k : types.keySet()) {
 			perc.put(k, (types.get(k).doubleValue()/getPopulationNumber()));
 		}
 		this.percentages = perc;
-		//System.out.println(types);
 	}
 
 	public Map<String, Integer> getPopulation() {
@@ -172,11 +156,9 @@ public class SimulationState {
 				perc1 = data.get(k);
 				perc2 = otherData.get(k);
 				if(!almostEqual(perc1,perc2, ERROR)) {
-					//System.out.println(""+data.get(k)+" "+otherData.get(k));
 					return false;
 				}
 			} else {
-				//System.out.println(""+data.get(k)+" "+otherData.get(k));
 				return false;
 			}
 		}
@@ -185,7 +167,6 @@ public class SimulationState {
 	}
 
 	private boolean almostEqual(double a, double b, double eps){
-		//System.out.println(""+a+" + "+b+" = "+Math.abs(a-b)+"<"+eps+" : "+(Math.abs(a-b)<eps));
 		return Math.abs(a-b)<eps;
 	}
 

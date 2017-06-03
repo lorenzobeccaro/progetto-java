@@ -77,7 +77,6 @@ public class Chromosome implements TreePrinter.PrintableNode {
 	}
 	
 	public static void mapTypeToGene(Gender gender,String type, boolean dominant) {
-		if(type.length()>1)/* TODO Lancia eccezione */;
 		Chromosome.type2gender.put(type,gender);
 		Map<String,Character> genes;
 		if(gender == Gender.MALE) {

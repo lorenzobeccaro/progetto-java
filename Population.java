@@ -15,18 +15,22 @@ class Population {
 
 	private volatile long lastChange;
 	
-	private int MAX_THREADS = 10000;
+	private int MAX_THREADS = 8000;
 	private int MAX_STATES;
 	private int STEPS;
 
 	private volatile int changes = 0;
 	
 	public Population() {
-		int steps = 50;
-		STEPS = steps;
-		MAX_STATES = 10000/steps;
-		System.out.println("Simulation running with "+steps+" steps.");
+		STEPS = 100;
+		MAX_STATES = 500/STEPS;
+		System.out.println("Simulation running with "+STEPS+" steps.");
 		System.out.println("Minimum states: "+MAX_STATES);
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			
+		}
 	}
 	
 	@Override
@@ -65,7 +69,7 @@ class Population {
 	}
 	
 	public synchronized SimulationState getState() {
-		return new SimulationState(this.humans,this.alive);
+		return new SimulationState(this.humans);
 	}
 
 	public void addHuman(Human h) {
@@ -101,7 +105,7 @@ class Population {
 			return;
 		lastChange = System.currentTimeMillis();
 		this.changes++;
-		if(changes % ((double)STEPS/100) == 0) {
+		if((changes % ((double)STEPS/100)) == 0) {
 			System.out.print("*");
 		}
 		if(changes>STEPS) {
@@ -322,7 +326,7 @@ class Population {
 		if(states.size() == 0)
 			return 0;
 			
-		SimulationState current = getCurrentState();
+		SimulationState current = getState();
 		return current.getHappiness(type);
 	}
 
