@@ -5,7 +5,7 @@ import java.util.concurrent.*;
 class Population {
 	private volatile boolean running = false;
   
-  	private Map<String,String> observingData = new HashMap<String,String>();
+  private Map<String,String> observingData = new HashMap<String,String>();
 	private volatile List<SimulationState> states = Collections.synchronizedList(new LinkedList<SimulationState>());
 	
 	private volatile List<Human> humans = Collections.synchronizedList(new LinkedList<Human>());
@@ -15,22 +15,19 @@ class Population {
 
 	private volatile long lastChange;
 	
-	private int MAX_THREADS = 8000;
-	private int MAX_STATES;
-	private int STEPS;
+	private SimulationState result = null;
+	
+	public int MAX_THREADS = 8000;
+	public final int MAX_STATES;
+	public final int STEPS;
+	public final int INITIAL_HUMANS = 200;
 
 	private volatile int changes = 0;
 	
 	public Population() {
 		STEPS = 100;
-		MAX_STATES = 500/STEPS;
-		System.out.println("Simulation running with "+STEPS+" steps.");
-		System.out.println("Minimum states: "+MAX_STATES);
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			
-		}
+		MAX_STATES = 4000/STEPS;
+		
 	}
 	
 	@Override
@@ -45,24 +42,18 @@ class Population {
 	public void setState(Map<Human, Integer> initState) {
 		LinkedList<Human> list = new LinkedList<Human>();
 		for(Human k : initState.keySet()) {
-			for(int j=0;j<initState.get(k);j++) {
+			int number = initState.get(k)*INITIAL_HUMANS/100;
+			for(int j=0;j<number;j++) {
 				Human newHuman = k.copy();
 				list.add(newHuman);
 			}
 			threadPools.add(new SubPopulation(k.getType()));
 		}
-		System.out.print("Populating");
 		Collections.sort(threadPools);
 		Collections.shuffle(list);
 		//System.out.println("0%"+new String(new char[95]).replace('\0', ' ')+"100%");
-		int index = 0;
 		for(Human h : list) {
 			addHuman(h);
-			if(index>list.size()/10) {
-				System.out.print(".");
-				index = 0;
-			}
-			index++;
 		}
 		running = true;
 		update();
@@ -103,15 +94,28 @@ class Population {
 		
 		if(!isRunning())
 			return;
+		
 		lastChange = System.currentTimeMillis();
 		this.changes++;
 		if((changes % ((double)STEPS/100)) == 0) {
-			System.out.print("*");
+			if(Simulator.verbose)
+				System.out.print("*");
 		}
 		if(changes>STEPS) {
 			update();
 			changes = 0;
-			System.out.println("0%"+new String(new char[95]).replace('\0', ' ')+"100%");
+			if(Simulator.verbose)
+				System.out.println("0%"+new String(new char[95]).replace('\0', ' ')+"100%");
+		}
+		if(isStable())
+			notify();
+	}
+	
+	public synchronized void checkStatus() {
+		if(System.currentTimeMillis()-lastChange > 100) {
+			change();
+			if(isStable())
+				notify();
 		}
 	}
 	
@@ -127,12 +131,29 @@ class Population {
 		}
 	}
 	
+	public synchronized void waitResult() {
+		try {
+			wait();
+		} catch(Exception e) {
+			return;
+		}
+	}
+	
 	public synchronized double getThresholdForGender(Human h) {
 		if(states.size() == 0)
 			return 0;
 			
 		SimulationState current = getCurrentState();
 		return getThresholdByType(h.getType(),current, true);
+	}
+	
+	public synchronized double getThresholdForGender(Gender g) {
+		if(states.size() == 0)
+			return 0;
+			
+		String type = Chromosome.getTypesByGender(g).get(0);
+		SimulationState current = getCurrentState();
+		return getThresholdByType(type, current, true);
 	}
 	
 	public synchronized double getThresholdForGender(Human h, SimulationState s) {
@@ -199,27 +220,38 @@ class Population {
 
 	public synchronized boolean isStable() {
 		
-		if(System.currentTimeMillis()-lastChange > 1000) {
-			saveState();
-			change();
-		}
-		
 		if(this.humans.size()==0 || singleGender())
 			return true;
 		
-		if(states.size()<MAX_STATES)
-			return false;
 		
-		Queue<SimulationState> queue = new LinkedList<SimulationState>(this.states);
-		//System.out.println(queue);
-		
-		
-		while(queue.size()>1) {
-			if(!queue.poll().isNear(queue.peek()))
-				return false;
+		SimulationState s = getState();
+		List<Double> maleHappiness = new ArrayList<Double>();
+		List<Double> femaleHappiness = new ArrayList<Double>();
+		for(String t : s.getPopulation().keySet()) {
+			if(Chromosome.getGenderByType(t) == Gender.MALE)
+				maleHappiness.add(s.getHappiness(t));
+			else
+				femaleHappiness.add(s.getHappiness(t));
 		}
 		
-		return true;
+		double error = 0.05;
+		if(almostEqual(maleHappiness, error) && almostEqual(femaleHappiness, error)) {
+			this.stop();
+			this.result = s;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	private boolean almostEqual(List<Double> list, double eps){
+		boolean result = true;
+		if(list.size()<2)
+			return true;
+		for(int i=0; i<list.size()-1; i++) {
+			result = result && Math.abs(list.get(i)-list.get(i+1))<eps;
+		}
+		return result;
 	}
 	
 	public synchronized SimulationState saveState() {
@@ -228,13 +260,15 @@ class Population {
 		while(states.size()>MAX_STATES) {
 			this.states.remove(this.states.get(states.size()-1));
 		}
-		System.out.println();
-		System.out.println(state);
+		if(Simulator.verbose) {
+			System.out.println();
+			System.out.println(state);
+		}
 		return state;
 	}
 
 	public SimulationState getResult() {
-		return getState();
+		return result;
 	}
 	
 	public Map<String,String> getObservingData() {

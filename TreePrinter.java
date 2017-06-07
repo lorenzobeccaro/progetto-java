@@ -2,12 +2,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-/**
- * Binary tree printer
- * 
- * @author MightyPork
- */
-
 public class TreePrinter
 {
     /** Node that can be printed */
@@ -38,13 +32,15 @@ public class TreePrinter
 
         List<PrintableNode> level = new ArrayList<PrintableNode>();
         List<PrintableNode> next = new ArrayList<PrintableNode>();
+        
+        int depth = 0;
 
         level.add(root);
         int nn = 1;
 
         int widest = 0;
 
-        while (nn != 0) {
+        while (nn != 0 && depth < 6) {
             List<String> line = new ArrayList<String>();
 
             nn = 0;
@@ -76,6 +72,7 @@ public class TreePrinter
             level = next;
             next = tmp;
             next.clear();
+            depth++;
         }
 
         int perpiece = lines.get(lines.size() - 1).size() * (widest + 4);

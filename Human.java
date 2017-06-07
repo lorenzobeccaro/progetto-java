@@ -6,11 +6,10 @@ public class Human implements Runnable {
 	private Chromosome partnerChromosome;
 	
 	 
+	private static int MIN_CHILDREN = 2;
+	private static int MAX_DATES = 5;
 	
-	public static final int MAX_DATES = 100000;
-	public static final int MIN_CHILDREN = 1;
-	
-	
+	private int dateCount = 0;
 	private int childrenCount = 0;
 
 	public Human(String type) {
@@ -33,23 +32,25 @@ public class Human implements Runnable {
 	@Override
 	public synchronized void run() {
 		Simulator.getPopulation().setAlive(this);
-		while(!Simulator.getPopulation().isRunning() && !Thread.currentThread().isInterrupted());
+		
 		try {
-			while((childrenCount<MIN_CHILDREN) || !isSad()) {
-				
+			while(!isSad()) {
 				if(this.chromosome.getGender() == Gender.FEMALE) {
 					Hotel.bar.sit(this);
-					wait(10);
+					wait(100);
 					if(this.partnerChromosome != null && Simulator.getPopulation().isRunning())
 						generate();
-					else
+					else {
 						Hotel.bar.standUp(this);
+						dateCount++;
+					}
 				} else {
 					Human partner = Hotel.bar.offerADrink();
 					if(Simulator.getMatrix().areCompatible(getType(), partner.getType())) {
 						dateWith(partner);
 					}
 				}
+				Simulator.getPopulation().checkStatus();
 			}
 		} catch (InterruptedException e) {
 			return;
@@ -62,6 +63,8 @@ public class Human implements Runnable {
 			inseminate(partner);
 		}
 		partner.awake();
+		this.dateCount++;
+		partner.dateCount++;
 	}
 	
 	public double getHappiness() {
@@ -88,15 +91,22 @@ public class Human implements Runnable {
 		String rival = getRival();
 		double rivalHappiness = Simulator.getPopulation().getHappiness(rival);
 		double happiness = getHappiness();
-		return happiness >= rivalHappiness;
+		if(happiness > rivalHappiness) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
-	public synchronized boolean isSad() {
+	public synchronized boolean isSad() {		
 		String rival = getRival();
 		double rivalHappiness = Simulator.getPopulation().getHappiness(rival);
 		double happiness = getHappiness();
-		if(happiness < rivalHappiness) {
-			return Math.random() < Math.min(1, 1 - happiness/rivalHappiness);
+		if(happiness <= rivalHappiness) {
+			if(getGender() == Gender.MALE)
+				return Math.random() < (dateCount*3/MAX_DATES + childrenCount/MIN_CHILDREN)/4;
+			else 
+				return Math.random() < (dateCount/MAX_DATES + childrenCount*3/MIN_CHILDREN)/4;
 		} else
 			return false;
 	}

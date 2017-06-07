@@ -6,7 +6,7 @@ public class SimulationState {
 	private Map<String,Integer> population;
 	private Map<String,Double> percentages;
 	
-	private final double ERROR = 0.02;
+	private final double ERROR = 0.05;
 
 	public SimulationState(List<Human> list) {
 		Map<String,Integer> types = new TreeMap<String,Integer>();
@@ -158,8 +158,6 @@ public class SimulationState {
 				if(!almostEqual(perc1,perc2, ERROR)) {
 					return false;
 				}
-			} else {
-				return false;
 			}
 		}
 		return true;
