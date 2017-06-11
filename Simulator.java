@@ -28,6 +28,7 @@ public class Simulator {
 			help += "\t-p\t\timposta la popolazione iniziale con le percentuali in input\n";
 			help += "\t\t\trispettivamente M, A, P e S.\n";
 			help += "\t--max-threads\timposta il numero massimo di thread attivi nello stesso momento";
+			help += "\t--humans\timposta il numero iniziale di individui per la simulazione";
 			System.out.println(help);
 			return;
 		}
@@ -46,7 +47,7 @@ public class Simulator {
 				a = Integer.parseInt(args[index+1]); // 15
 				b = Integer.parseInt(args[index+2]); // 20
 				c = Integer.parseInt(args[index+3]); // 3
-				if(a-b/2-c <= 0 || !((c < a) && (a < b)))
+				if(a-b/2-c <= 0 || !((c < a) && (a < b)) || c==0)
 					throw new Exception();
 					
 			} catch (Exception e) {
@@ -126,6 +127,14 @@ public class Simulator {
 				
 			}
 		}
+		if(listArgs.contains("--humans")) {
+			try {
+				int i = listArgs.indexOf("--humans");
+				pop.INITIAL_HUMANS = Integer.parseInt(args[i+1]);
+			} catch(Exception e) {
+
+			}
+		}
 		
 		pop.observeData("P", "S");
 		pop.observeData("M", "A");
@@ -136,8 +145,18 @@ public class Simulator {
 		System.out.println("DONE");
 		System.out.println("---RESULT---" + pop.getResult());
 		
-		if(listArgs.contains("-g"))
-			pop.genealogicalTree();
+		if(listArgs.contains("-g")) {
+			boolean pretty = false;
+			int generations = 4;
+			try {
+				int i = listArgs.indexOf("-g");
+				generations = Integer.parseInt(args[i+1]);
+				pretty = Boolean.parseBoolean(args[i+2]);
+			} catch(Exception e) {
+
+			}
+			pop.genealogicalTree(pretty,generations);
+		}
 		System.out.println("Exiting...");
 		long millis = System.currentTimeMillis()-initTime;
 		long seconds = (millis / 1000) % 60;

@@ -26,7 +26,7 @@ public class TreePrinter
      * @param root
      *            tree root node
      */
-    public static void print(PrintableNode root)
+    public static void print(PrintableNode root,int maxdepth)
     {
         List<List<String>> lines = new ArrayList<List<String>>();
 
@@ -40,7 +40,7 @@ public class TreePrinter
 
         int widest = 0;
 
-        while (nn != 0 && depth < 6) {
+        while (nn != 0 && depth < maxdepth+1) {
             List<String> line = new ArrayList<String>();
 
             nn = 0;
@@ -87,9 +87,9 @@ public class TreePrinter
                     char c = ' ';
                     if (j % 2 == 1) {
                         if (line.get(j - 1) != null) {
-                            c = (line.get(j) != null) ? '|' : '|';
+                            c = (line.get(j) != null) ? '┴' : '┘';
                         } else {
-                            if (j < line.size() && line.get(j) != null) c = '|';
+                            if (j < line.size() && line.get(j) != null) c = '└';
                         }
                     }
                     System.out.print(c);
@@ -102,11 +102,11 @@ public class TreePrinter
                     } else {
 
                         for (int k = 0; k < hpw; k++) {
-                            System.out.print(j % 2 == 0 ? " " : "-");
+                            System.out.print(j % 2 == 0 ? " " : "─");
                         }
-                        System.out.print(j % 2 == 0 ? "|" : "|");
+                        System.out.print(j % 2 == 0 ? "┌" : "┐");
                         for (int k = 0; k < hpw; k++) {
-                            System.out.print(j % 2 == 0 ? "-" : " ");
+                            System.out.print(j % 2 == 0 ? "─" : " ");
                         }
                     }
                 }

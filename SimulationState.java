@@ -97,6 +97,8 @@ public class SimulationState {
 		prev = 0;
 		s += "\n";
 		for(Population.SubPopulation t : Simulator.getPopulation().threadPools) {
+			if(!perc.containsKey(t.getName()))
+				continue;
 			String info = "Threads "+t.getName()+": "+t.getActiveCount();
 			int current_spaces = info.length()/2;
 			String spaces = new String(new char[(MAX_COLS/num_types)-(current_spaces+prev)]).replace('\0', ' ');
@@ -112,13 +114,13 @@ public class SimulationState {
 			s += ": "+df.format(data.get(k));
 			s += " ";
 		}
-		s += "  Avg happiness: ";
+		s += "  Avg gain: ";
 		for(String k : perc.keySet()) {
 			s += k;
 			s += ": "+df.format(Simulator.getPopulation().getHappiness(k));
 			s += " ";
 		}
-		s += " Male: "+df.format(Simulator.getPopulation().getThresholdForGender(Gender.MALE,this));
+		s += "\nMale: "+df.format(Simulator.getPopulation().getThresholdForGender(Gender.MALE,this));
 		s += " Female: "+df.format(Simulator.getPopulation().getThresholdForGender(Gender.FEMALE,this));
 		return s;
 	}

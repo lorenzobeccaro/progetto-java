@@ -37,7 +37,7 @@ public class Human implements Runnable {
 			while(!isSad()) {
 				if(this.chromosome.getGender() == Gender.FEMALE) {
 					Hotel.bar.sit(this);
-					wait(100);
+					wait(1);
 					if(this.partnerChromosome != null && Simulator.getPopulation().isRunning())
 						generate();
 					else {

@@ -20,7 +20,7 @@ class Population {
 	public int MAX_THREADS = 8000;
 	public final int MAX_STATES;
 	public final int STEPS;
-	public final int INITIAL_HUMANS = 200;
+	public int INITIAL_HUMANS = 200;
 
 	private volatile int changes = 0;
 	
@@ -137,6 +137,7 @@ class Population {
 		} catch(Exception e) {
 			return;
 		}
+		this.stop();
 	}
 	
 	public synchronized double getThresholdForGender(Human h) {
@@ -212,7 +213,7 @@ class Population {
 		Human current = snap.poll();
 		boolean result = true;
 		while(snap.size()>0) {
-			result = result && current.getGender().equals(snap.peek());
+			result = result && current.getGender().equals(snap.peek().getGender());
 			current = snap.poll();
 		}
 		return result;
@@ -236,7 +237,6 @@ class Population {
 		
 		double error = 0.05;
 		if(almostEqual(maleHappiness, error) && almostEqual(femaleHappiness, error)) {
-			this.stop();
 			this.result = s;
 			return true;
 		} else {
@@ -313,11 +313,13 @@ class Population {
 		return running;
 	}
 	
-	public void genealogicalTree() {
+	public void genealogicalTree(boolean pretty,int generations) {
 		Human root = getRandomHuman();
-		//printBinaryTree(root.getChromosome(),0);
-		if(root != null)
-			TreePrinter.print(root.getChromosome());
+		if(!pretty)
+			printBinaryTree(root.getChromosome(),0,generations);
+		else
+			if(root != null)
+				TreePrinter.print(root.getChromosome(),generations);
 	}
 
 	private Human getRandomHuman() {
@@ -325,19 +327,19 @@ class Population {
 			return null;
 		return humans.get((int)(Math.random()*humans.size())-1);
 	}
-	
-	public static void printBinaryTree(Chromosome root, int level){
-	    if(root==null)
+
+	public static void printBinaryTree(Chromosome root, int level,int maxlevel){
+	    if(root==null || level>maxlevel)
 	         return;
-	    printBinaryTree(root.getRight(), level+1);
+	    printBinaryTree(root.getRight(), level+1,maxlevel);
 	    if(level!=0){
 	        for(int i=0;i<level-1;i++)
 	            System.out.print("    |\t");
-	            System.out.println("    |---"+root.toString());
+	        System.out.println("    |---"+root.toString());
 	    }
 	    else
 	        System.out.println(root.toString());
-	    printBinaryTree(root.getLeft(), level+1);
+	    printBinaryTree(root.getLeft(), level+1,maxlevel);
 	}
 
 	public int getTotalThreads() {
